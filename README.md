@@ -1,0 +1,1 @@
+# plugins-conditionally-display-featured-image-on-singular-pages
