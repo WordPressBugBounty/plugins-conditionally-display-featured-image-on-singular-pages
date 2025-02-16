@@ -1,11 +1,11 @@
 {
   "name": "conditionally-display-featured-image-on-singular-pages-and-posts",
-  "version": "3.3.0",
-  "description": "Choose if the featured image should be displayed in the single post/page view or not. This plugin doesn't affect the archives view.",
-  "main": "src/index.js",
+  "version": "3.3.1",
+  "description": "Easily control whether the featured image appears in the single post or page view (doesn't hide it in archive/list view).",
+  "main": "js/index.js",
   "scripts": {
-    "start": "wp-scripts start",
-    "build": "wp-scripts build"
+    "start": "wp-scripts start js/index.js",
+    "build": "wp-scripts build js/index.js"
   },
   "repository": {
     "type": "git",
