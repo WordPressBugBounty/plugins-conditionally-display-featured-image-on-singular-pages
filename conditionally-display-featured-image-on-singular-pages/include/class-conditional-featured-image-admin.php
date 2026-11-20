@@ -85,6 +85,11 @@ if ( ! class_exists( 'Cybocfi_Admin' ) ) {
 				return;
 			}
 
+			// without a featured image, the flag has no use
+			if ( ! post_type_supports( $post->post_type, 'thumbnail' ) ) {
+				return;
+			}
+
 			// ensure, we do not overwrite the flag if set explicitly.
 			// (update_post_meta() is called before the post is actually
 			// inserted and thus the save_post action is triggered).
@@ -159,17 +164,15 @@ if ( ! class_exists( 'Cybocfi_Admin' ) ) {
 		 * Load the js that modifies the block editor
 		 */
 		public function load_block_editor_js() {
+			// written by wp-scripts with the script's dependencies and a hash
+			// of its content
+			$asset = require CYBOCFI_PLUGIN_PATH . '/build/index.asset.php';
+
 			wp_enqueue_script(
 				'cybocfi-script',
 				plugins_url( 'build/index.js', CYBOCFI_PLUGIN_PATH . '/conditional-featured-image.php' ),
-				array(
-					'wp-components',
-					'wp-compose',
-					'wp-data',
-					'wp-element',
-					'wp-hooks',
-					'wp-i18n',
-				)
+				$asset['dependencies'],
+				$asset['version']
 			);
 
 			wp_localize_script(
@@ -387,30 +390,33 @@ if ( ! class_exists( 'Cybocfi_Admin' ) ) {
 		}
 
 		/**
-		 * Add support for the CPT UI plugin
+		 * Add 'custom-fields' support to a post type with a featured image
+		 * that the block editor can edit, if the plugin is enabled for it.
 		 *
-		 * The plugin needs support for 'custom-fields' when the post type is
-		 * registered {@see register_post_type()}. This function adds this
-		 * support for any post type that has this plugin enabled and that does
-		 * not explicitly disable any support (passes false to the support arg
-		 * of the register_post_type() function).
+		 * The REST API returns and saves the post meta, and with it the hide
+		 * flag, only for post types with this support. Without it, the block
+		 * editor drops the checkbox's value.
 		 *
-		 * @param array $value Empty array to add supports keys to.
-		 * @param string $name Post type slug being registered.
+		 * At registration, as register_post_type() would add it: core
+		 * registers the footnotes meta on init only for post types that have
+		 * it by then.
 		 *
-		 * @return array
+		 * @param string $post_type Post type slug.
+		 * @param WP_Post_Type $post_type_object
 		 *
-		 * @since 2.7.0
-		 *
-		 * @link https://developer.wordpress.org/reference/functions/register_post_type/
-		 * @link https://github.com/WebDevStudios/custom-post-type-ui/blob/master/custom-post-type-ui.php
+		 * @link https://developer.wordpress.org/reference/hooks/registered_post_type/
 		 */
-		public function cptui_compatibility( $value, $name ) {
-			if ( Cybocfi_Util::is_enabled_for_post_type( $name ) ) {
-				return array_merge( $value, array( 'custom-fields' ) );
+		public function add_custom_fields_support( $post_type, $post_type_object ) {
+			// the block editor needs 'editor', see use_block_editor_for_post_type()
+			if ( ! $post_type_object->show_in_rest || ! post_type_supports( $post_type, 'editor' ) || ! post_type_supports( $post_type, 'thumbnail' ) ) {
+				return;
 			}
 
-			return $value;
+			if ( ! Cybocfi_Util::is_enabled_for_post_type( $post_type ) ) {
+				return;
+			}
+
+			add_post_type_support( $post_type, 'custom-fields' );
 		}
 	}
 }
